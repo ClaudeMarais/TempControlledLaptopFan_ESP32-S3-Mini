@@ -1,8 +1,8 @@
 // A simple Arduino project that uses a temperature sensor to control two fans to help cool down a laptop on a laptop stand.
 // Power is supplied by any 5V source and a mosfet switch is used to switch the fans on/off based on the current temperature
-// under the laptop. I was able to see the fans reduce the temparate under the laptop from 32.8 – 30.8*C within 2 minutes.
+// under the laptop. I was able to see the fans reduce the temperature under the laptop from 32.8 – 30.8*C within 2 minutes.
 // If the fans don't need to be on, the device will switch them off and go into deep sleep for 10 seconds, then check the
-// tempeature again.
+// temperature again.
 //
 // Hardware:
 //    ESP32-C3 Super Mini

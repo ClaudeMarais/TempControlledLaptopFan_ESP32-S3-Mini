@@ -46,16 +46,14 @@ void setup()
 
   DebugPrintf("\n\n********* Temperature controlled laptop fan using ESP32-C3 Super Mini *********\n\n");
 
-  // It's a good idea to reboot the device into a clean state and just start fresh from the setup() function
-  RebootAfterDeepSleep();
-
   // Init SHT31
   if (!sht31.begin(0x44))
   {
-    DebugPrintln("Couldn't find SHT31");
-    while (1) delay(10);
+    DebugPrintln("Couldn't find SHT31, sleeping then retrying...");
+    DeepSleep();
   }
 
+  pinMode(MOSFET_GATE, OUTPUT);
   TurnFansOff();
 }
 
@@ -63,15 +61,15 @@ void loop()
 {
   float t = sht31.readTemperature();
 
-  if (!isnan(t))
-  {
-    DebugPrintf("Temp *C = %2.1f\t\t\n", t);
-  }
-  else
+  if (isnan(t))
   { 
     DebugPrintln("Failed to read temperature");
+    delay(waitTimeInMSec);
+    return;
   }
-  
+
+  DebugPrintf("Temp *C = %2.1f\t\t\n", t);
+
   if (t > TemperatureThreshold)
   {
     TurnFansOn();
@@ -79,7 +77,6 @@ void loop()
   else
   {
     TurnFansOff();
-    delay(waitTimeInMSec);
     DeepSleep();
   }
 
@@ -89,19 +86,14 @@ void loop()
 void TurnFansOn()
 {
   DebugPrintln("Turn fans ON");
-  pinMode(MOSFET_GATE, OUTPUT);
   digitalWrite(MOSFET_GATE, HIGH);
 }
 
 void TurnFansOff()
 {
   DebugPrintln("Turn fans OFF");
-  pinMode(MOSFET_GATE, OUTPUT);
   digitalWrite(MOSFET_GATE, LOW);
 }
-
-// "RTC_DATA_ATTR" ensures that this value will persist after waking up from deep sleep
-RTC_DATA_ATTR bool bInDeepSleep = false;
 
 void DeepSleep()
 { 
@@ -112,24 +104,7 @@ void DeepSleep()
 #endif
 
   // Go into deep sleep
-  bInDeepSleep = true;
   esp_sleep_enable_timer_wakeup(DeepSleepTime);
   esp_deep_sleep_start();
-}
-
-// It's a good idea to reboot the device into a clean state and just start fresh from the setup() function, especially since we're working with multiple threads
-void RebootAfterDeepSleep()
-{
-  if (bInDeepSleep)
-  {
-    bInDeepSleep = false;
-    DebugPrintln("Woke up from deep sleep");
-
-    DebugPrintln("Rebooting device into clean state");
-#ifdef DEBUG
-    Serial.flush();
-#endif
-    ESP.restart();
-  }
 }
 
